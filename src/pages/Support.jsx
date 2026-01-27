@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { FaHandsHelping, FaThumbsUp, FaExternalLinkAlt, FaCheckCircle, FaClock, FaUsers } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { FaHandsHelping, FaThumbsUp, FaExternalLinkAlt, FaCheckCircle, FaClock, FaUsers, FaSpinner } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import { fetchSupportRequestsWithVotes, getUserVotedIds, submitVote } from '../services/googleSheetsService';
+import { isConfigured, GOOGLE_SHEETS_CONFIG } from '../config/googleSheets';
 
-// Sample approved support requests - In production, this comes from Google Sheets
+// Sample approved support requests - Used when Google Sheets is not configured
 const sampleSupportRequests = [
   {
-    id: 1,
+    id: '1',
     title: 'Medical Support for Member',
     description: 'A member needs financial assistance for a medical procedure. Any contribution will go a long way.',
     category: 'Medical',
@@ -15,7 +18,7 @@ const sampleSupportRequests = [
     date: '2024-01-10',
   },
   {
-    id: 2,
+    id: '2',
     title: 'Education Scholarship Fund',
     description: 'Support a member\'s child education through university scholarship assistance.',
     category: 'Education',
@@ -26,7 +29,7 @@ const sampleSupportRequests = [
     date: '2024-01-08',
   },
   {
-    id: 3,
+    id: '3',
     title: 'Business Startup Support',
     description: 'Help a member kickstart their small business with initial capital.',
     category: 'Business',
@@ -37,7 +40,7 @@ const sampleSupportRequests = [
     date: '2024-01-05',
   },
   {
-    id: 4,
+    id: '4',
     title: 'Emergency Housing Assistance',
     description: 'A member lost their home due to unforeseen circumstances and needs temporary housing support.',
     category: 'Emergency',
@@ -52,22 +55,89 @@ const sampleSupportRequests = [
 const categories = ['All', 'Medical', 'Education', 'Business', 'Emergency', 'Other'];
 
 const Support = () => {
-  const [supportRequests, setSupportRequests] = useState(sampleSupportRequests);
+  const { user } = useAuth();
+  const [supportRequests, setSupportRequests] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [votedItems, setVotedItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [votingId, setVotingId] = useState(null);
+  const [error, setError] = useState(null);
 
-  // Replace this with your actual Google Form URL
-  const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform';
+  // Google Form URL for requesting support
+  const GOOGLE_FORM_URL = GOOGLE_SHEETS_CONFIG.FORMS.SUPPORT_REQUEST || 'https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform';
 
-  const handleVote = (id) => {
-    if (votedItems.includes(id)) return;
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
 
-    setSupportRequests((prev) =>
-      prev.map((request) =>
-        request.id === id ? { ...request, votes: request.votes + 1 } : request
-      )
-    );
-    setVotedItems((prev) => [...prev, id]);
+      try {
+        if (isConfigured()) {
+          // Fetch support requests with vote counts
+          const requests = await fetchSupportRequestsWithVotes();
+          setSupportRequests(requests);
+
+          // Fetch user's voted items if logged in
+          if (user?.email) {
+            const userVotes = await getUserVotedIds(user.email);
+            setVotedItems(userVotes);
+          }
+        } else {
+          // Use sample data in development
+          setSupportRequests(sampleSupportRequests);
+        }
+      } catch (err) {
+        console.error('Error loading support requests:', err);
+        setError('Failed to load support requests. Using sample data.');
+        setSupportRequests(sampleSupportRequests);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user?.email]);
+
+  const handleVote = async (id) => {
+    if (votedItems.includes(String(id))) return;
+    if (!user?.email) {
+      setError('Please log in to vote');
+      return;
+    }
+
+    setVotingId(id);
+
+    try {
+      if (isConfigured()) {
+        // Submit vote to Google Sheets
+        const result = await submitVote(id, user.email);
+
+        if (result.success) {
+          // Update local state
+          setSupportRequests((prev) =>
+            prev.map((request) =>
+              request.id === id ? { ...request, votes: request.votes + 1 } : request
+            )
+          );
+          setVotedItems((prev) => [...prev, String(id)]);
+        } else {
+          setError(result.message);
+        }
+      } else {
+        // Local voting for development
+        setSupportRequests((prev) =>
+          prev.map((request) =>
+            request.id === id ? { ...request, votes: request.votes + 1 } : request
+          )
+        );
+        setVotedItems((prev) => [...prev, String(id)]);
+      }
+    } catch (err) {
+      console.error('Error submitting vote:', err);
+      setError('Failed to submit vote. Please try again.');
+    } finally {
+      setVotingId(null);
+    }
   };
 
   const filteredRequests =
@@ -91,6 +161,18 @@ const Support = () => {
           </p>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm flex justify-between items-center">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="text-red-600 hover:text-red-800">
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Request Support CTA */}
@@ -131,7 +213,7 @@ const Support = () => {
           </div>
         </div>
 
-        {/* Support Requests */}
+        {/* Support Requests Header */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <FaCheckCircle className="text-emerald-500 mr-2" />
@@ -142,7 +224,12 @@ const Support = () => {
           </p>
         </div>
 
-        {sortedRequests.length > 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <FaSpinner className="w-12 h-12 text-purple-500 animate-spin mb-4" />
+            <p className="text-gray-600 font-medium">Loading support requests...</p>
+          </div>
+        ) : sortedRequests.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {sortedRequests.map((request, index) => (
               <div
@@ -194,14 +281,23 @@ const Support = () => {
                   </div>
                   <button
                     onClick={() => handleVote(request.id)}
-                    disabled={votedItems.includes(request.id)}
-                    className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                      votedItems.includes(request.id)
+                    disabled={votedItems.includes(String(request.id)) || votingId === request.id}
+                    className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center ${
+                      votedItems.includes(String(request.id))
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-purple-600 text-white hover:bg-purple-700'
                     }`}
                   >
-                    {votedItems.includes(request.id) ? 'Voted' : 'Vote'}
+                    {votingId === request.id ? (
+                      <>
+                        <FaSpinner className="animate-spin mr-2" />
+                        Voting...
+                      </>
+                    ) : votedItems.includes(String(request.id)) ? (
+                      'Voted'
+                    ) : (
+                      'Vote'
+                    )}
                   </button>
                 </div>
               </div>

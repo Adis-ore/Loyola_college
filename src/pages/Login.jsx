@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { GOOGLE_SHEETS_CONFIG } from '../config/googleSheets';
 import { FaEnvelope, FaLock, FaSpinner, FaGraduationCap, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { HiSparkles, HiInformationCircle } from 'react-icons/hi';
 
@@ -10,7 +11,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isTestingMode } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -161,15 +162,19 @@ const Login = () => {
 
           {/* Test Credentials - Improved spacing and design */}
           <div className="p-5 bg-white border border-emerald-100 rounded-2xl shadow-sm space-y-2">
-            <h3 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">Development Login:</h3>
+            <h3 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
+              {isTestingMode ? 'Development Login:' : 'Login Credentials:'}
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                <div className="text-sm text-gray-600">
                  <span className="block text-[10px] text-gray-400 font-bold uppercase">Email</span>
-                 <code className="text-emerald-700 font-medium">test@loyola.com</code>
+                 <code className="text-emerald-700 font-medium">
+                   {isTestingMode ? 'test@loyola.com' : 'Your registered email'}
+                 </code>
                </div>
                <div className="text-sm text-gray-600">
                  <span className="block text-[10px] text-gray-400 font-bold uppercase">Password</span>
-                 <code className="text-emerald-700 font-medium">loyola03</code>
+                 <code className="text-emerald-700 font-medium">{GOOGLE_SHEETS_CONFIG.SHARED_PASSWORD}</code>
                </div>
             </div>
           </div>

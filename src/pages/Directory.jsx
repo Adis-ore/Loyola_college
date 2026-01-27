@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { FaSearch, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaBirthdayCake, FaUsers } from 'react-icons/fa';
+import { FaSearch, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaBirthdayCake, FaUsers, FaSpinner } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
+import { fetchMembers } from '../services/googleSheetsService';
+import { isConfigured } from '../config/googleSheets';
 
-// Sample data - In production, this will come from Google Sheets
+// Sample data - Used when Google Sheets is not configured
 const sampleMembers = [
   { id: 1, name: 'John Adeyemi', email: 'john.adeyemi@email.com', phone: '+234 801 234 5678', work: 'Software Engineer', birthday: 'March 15', class: 'Science' },
   { id: 2, name: 'Mary Okonkwo', email: 'mary.okonkwo@email.com', phone: '+234 802 345 6789', work: 'Doctor', birthday: 'July 22', class: 'Science' },
@@ -15,10 +17,12 @@ const sampleMembers = [
 ];
 
 const Directory = () => {
-  const [members] = useState(sampleMembers);
+  const [members, setMembers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState('All');
-  const [filteredMembers, setFilteredMembers] = useState(sampleMembers);
+  const [filteredMembers, setFilteredMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const classes = ['All', 'Science', 'Arts', 'Commercial'];
 
@@ -28,6 +32,34 @@ const Directory = () => {
     Commercial: { bg: 'bg-orange-100', text: 'text-orange-700', gradient: 'from-orange-500 to-orange-600' },
   };
 
+  // Fetch members on component mount
+  useEffect(() => {
+    const loadMembers = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        if (isConfigured()) {
+          // Fetch from Google Sheets
+          const data = await fetchMembers();
+          setMembers(data);
+        } else {
+          // Use sample data in development
+          setMembers(sampleMembers);
+        }
+      } catch (err) {
+        console.error('Error loading members:', err);
+        setError('Failed to load members. Using sample data.');
+        setMembers(sampleMembers);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMembers();
+  }, []);
+
+  // Filter members based on search and class
   useEffect(() => {
     let filtered = members;
 
@@ -127,9 +159,23 @@ const Directory = () => {
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-xl text-sm">
+            {error}
+          </div>
+        </div>
+      )}
+
       {/* Members Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {filteredMembers.length > 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <FaSpinner className="w-12 h-12 text-blue-500 animate-spin mb-4" />
+            <p className="text-gray-600 font-medium">Loading members...</p>
+          </div>
+        ) : filteredMembers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredMembers.map((member, index) => {
               const colors = classColors[member.class] || classColors.Science;

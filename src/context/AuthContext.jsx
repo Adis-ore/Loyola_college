@@ -1,25 +1,19 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { GOOGLE_SHEETS_CONFIG, isConfigured } from '../config/googleSheets';
+import { verifyUser, fetchMembers as fetchMembersFromSheet } from '../services/googleSheetsService';
 
 const AuthContext = createContext(null);
 
 // ============ TESTING MODE ============
-// Set to true to bypass authentication for testing
-const TESTING_MODE = true;
+// Set to false when Google Sheets are configured and ready
+const TESTING_MODE = !isConfigured();
 // ======================================
-
-// Generic password for all users
-const GENERIC_PASSWORD = 'loyola03';
 
 // Test users for development (will work when TESTING_MODE is true)
 const TEST_USERS = [
   { email: 'test@loyola.com', name: 'Test User', phone: '+234 800 000 0000', work: 'Developer', birthday: 'January 1', class: 'Science' },
   { email: 'admin@loyola.com', name: 'Admin User', phone: '+234 800 000 0001', work: 'Administrator', birthday: 'February 15', class: 'Science' },
 ];
-
-// Google Sheets configuration - Replace with your actual sheet ID and API key
-const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID';
-const API_KEY = 'YOUR_GOOGLE_API_KEY';
-const MEMBERS_RANGE = 'Members!A:F'; // Assuming columns: Name, Email, Phone, Work, Birthday, Class
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -30,7 +24,11 @@ export const AuthProvider = ({ children }) => {
     // Check for saved session
     const savedUser = localStorage.getItem('loyola_user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('loyola_user');
+      }
     }
     setLoading(false);
   }, []);
@@ -38,25 +36,15 @@ export const AuthProvider = ({ children }) => {
   // Fetch members from Google Sheets
   const fetchMembers = async () => {
     try {
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${MEMBERS_RANGE}?key=${API_KEY}`;
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.values) {
-        const [headers, ...rows] = data.values;
-        const membersData = rows.map((row, index) => ({
-          id: index + 1,
-          name: row[0] || '',
-          email: row[1] || '',
-          phone: row[2] || '',
-          work: row[3] || '',
-          birthday: row[4] || '',
-          class: row[5] || '',
-        }));
-        setMembers(membersData);
-        return membersData;
+      if (TESTING_MODE) {
+        // Return test users in testing mode
+        setMembers(TEST_USERS);
+        return TEST_USERS;
       }
-      return [];
+
+      const membersData = await fetchMembersFromSheet();
+      setMembers(membersData);
+      return membersData;
     } catch (error) {
       console.error('Error fetching members:', error);
       return [];
@@ -64,7 +52,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    if (password !== GENERIC_PASSWORD) {
+    const sharedPassword = GOOGLE_SHEETS_CONFIG.SHARED_PASSWORD;
+
+    // Validate password
+    if (password !== sharedPassword) {
       return { success: false, message: 'Invalid password' };
     }
 
@@ -78,34 +69,38 @@ export const AuthProvider = ({ children }) => {
         const userData = {
           email: testUser.email,
           name: testUser.name,
+          class: testUser.class,
           isLoggedIn: true,
         };
         setUser(userData);
         localStorage.setItem('loyola_user', JSON.stringify(userData));
         return { success: true, user: userData };
       }
-      return { success: false, message: 'Email not found. Try test@loyola.com' };
+      return { success: false, message: 'Email not found. Try test@loyola.com or admin@loyola.com' };
     }
 
-    // Production mode: Fetch members and check if email exists
-    const membersList = await fetchMembers();
-    const member = membersList.find(
-      (m) => m.email.toLowerCase() === email.toLowerCase()
-    );
+    // Production mode: Verify user against AuthorizedUsers sheet
+    try {
+      const authorizedUser = await verifyUser(email);
 
-    if (!member) {
-      return { success: false, message: 'Email not found in database' };
+      if (!authorizedUser) {
+        return { success: false, message: 'Email not found in authorized users list' };
+      }
+
+      const userData = {
+        email: authorizedUser.email,
+        name: authorizedUser.name,
+        class: authorizedUser.class,
+        isLoggedIn: true,
+      };
+
+      setUser(userData);
+      localStorage.setItem('loyola_user', JSON.stringify(userData));
+      return { success: true, user: userData };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, message: 'An error occurred during login. Please try again.' };
     }
-
-    const userData = {
-      email: member.email,
-      name: member.name,
-      isLoggedIn: true,
-    };
-
-    setUser(userData);
-    localStorage.setItem('loyola_user', JSON.stringify(userData));
-    return { success: true, user: userData };
   };
 
   const logout = () => {
@@ -123,6 +118,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         fetchMembers,
         isAuthenticated: !!user,
+        isTestingMode: TESTING_MODE,
       }}
     >
       {children}
