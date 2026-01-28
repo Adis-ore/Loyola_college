@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { FaNewspaper, FaCalendar, FaUser, FaChevronRight, FaSearch, FaSpinner } from 'react-icons/fa';
+import { FaNewspaper, FaCalendar, FaUser, FaChevronRight, FaSearch } from 'react-icons/fa';
 import { fetchNews } from '../services/googleSheetsService';
 import { isConfigured } from '../config/googleSheets';
+import { NewsCardSkeleton, Skeleton } from '../components/Skeleton';
 
 // Sample news data - Used when Google Sheets is not configured
 const sampleNews = [
@@ -179,9 +180,35 @@ const News = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <FaSpinner className="w-12 h-12 text-orange-500 animate-spin mb-4" />
-            <p className="text-gray-600 font-medium">Loading news...</p>
+          <div className="space-y-12">
+            {/* Featured News Skeleton */}
+            <div>
+              <Skeleton className="w-40 h-8 mb-6" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl p-6 animate-pulse">
+                    <Skeleton className="w-20 h-6 rounded-full mb-4 bg-white/30" />
+                    <Skeleton className="w-3/4 h-6 mb-2 bg-white/30" />
+                    <Skeleton className="w-full h-4 mb-1 bg-white/30" />
+                    <Skeleton className="w-2/3 h-4 mb-4 bg-white/30" />
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="w-24 h-4 bg-white/30" />
+                      <Skeleton className="w-20 h-4 bg-white/30" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* All News Skeleton */}
+            <div>
+              <Skeleton className="w-32 h-8 mb-6" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <NewsCardSkeleton key={i} />
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <>

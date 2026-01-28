@@ -38,32 +38,38 @@ export const GOOGLE_SHEETS_CONFIG = {
       RANGE: 'Sheet1!A:I', // Columns: ID, Title, Excerpt, Content, Category, Author, Date, ImageURL, IsFeatured
     },
 
-    // Sheet 5: Job Board
+    // Sheet 5: Job Board (linked to Google Form)
     JOBS: {
-      SPREADSHEET_ID: '1Wcnn11phKI_NfNG8OfwZEjywxLuTHF6QpLhseZoLEos', // Fill with your Jobs sheet ID
-      SHEET_NAME: 'Sheet1',
-      RANGE: 'Sheet1!A:L', // Columns: ID, Title, Company, Description, Requirements, Type, Location, Salary, PostedBy, PostedDate, ApplyURL, Status
+      SPREADSHEET_ID: '1Wcnn11phKI_NfNG8OfwZEjywxLuTHF6QpLhseZoLEos',
+      SHEET_NAME: 'Form Responses 1',
+      RANGE: 'Form Responses 1!A:K', // Columns: Timestamp, Title, Company, Description, Requirements, Type, Location, Salary, ApplyURL, PostedBy, Status
     },
 
-    // Sheet 6: Support Requests
+    // Sheet 6: Support Requests (linked to Google Form)
     SUPPORT_REQUESTS: {
-      SPREADSHEET_ID: '1U21zgSv_T6DaTdl8rcOaGEOMIRtonOme5jqVqzX76iA', // Fill with your SupportRequests sheet ID
-      SHEET_NAME: 'Sheet1',
-      RANGE: 'Sheet1!A:I', // Columns: ID, Title, Description, Category, Amount, RequestedBy, RequestedByEmail, Date, Status
+      SPREADSHEET_ID: '1U21zgSv_T6DaTdl8rcOaGEOMIRtonOme5jqVqzX76iA',
+      SHEET_NAME: 'Form Responses 1',
+      RANGE: 'Form Responses 1!A:H', // Columns: Timestamp, Title, Description, Category, Amount, RequestedBy, RequestedByEmail, Status
     },
 
-    // Sheet 7: Votes (for support request voting)
+    // Sheet 7: Votes (for support request voting with comments & pledges)
     VOTES: {
       SPREADSHEET_ID: '1cKYrNwYGs1xsO1jyRsVPMPaT82sSFBp4zRT4toGy8ys', // Fill with your Votes sheet ID
       SHEET_NAME: 'Sheet1',
-      RANGE: 'Sheet1!A:D', // Columns: SupportRequestID, UserEmail, VoteTimestamp, VoteType
+      RANGE: 'Sheet1!A:F', // Columns: SupportRequestID, UserEmail, UserName, Comment, PledgeAmount, VoteTimestamp
     },
   },
 
   // Google Form URLs (optional - for submitting new entries)
   FORMS: {
-    SUPPORT_REQUEST: '', // Google Form URL for requesting support
+    SUPPORT_REQUEST: 'https://forms.gle/z6xdhrFkfhytmJz59', // Google Form URL for requesting support
     POST_JOB: '', // Google Form URL for posting jobs
+  },
+
+  // Google Apps Script URLs (for write operations that require authentication)
+  // Deploy your Apps Script as a web app and paste the URL here
+  APPS_SCRIPT: {
+    VOTES_URL: 'https://script.google.com/macros/s/AKfycbwJcfp30n98UcIedF-RxfkKdVpKEYla2WQCNKJU4R2EIX9G1CP_mN_1T93ULyznBCSs/exec', // Paste your deployed Apps Script URL here (e.g., https://script.google.com/macros/s/AKfycbx.../exec)
   },
 };
 

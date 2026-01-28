@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { FaSearch, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaBirthdayCake, FaUsers, FaSpinner } from 'react-icons/fa';
+import { FaSearch, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaBirthdayCake, FaUsers } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
 import { fetchMembers } from '../services/googleSheetsService';
 import { isConfigured } from '../config/googleSheets';
+import { MemberCardSkeleton } from '../components/Skeleton';
 
 // Sample data - Used when Google Sheets is not configured
 const sampleMembers = [
@@ -171,9 +172,10 @@ const Directory = () => {
       {/* Members Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <FaSpinner className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-            <p className="text-gray-600 font-medium">Loading members...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <MemberCardSkeleton key={i} />
+            ))}
           </div>
         ) : filteredMembers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

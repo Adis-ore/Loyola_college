@@ -225,8 +225,8 @@ export const fetchNews = async () => {
 // ============================================================
 
 /**
- * Fetch all jobs from the Jobs sheet
- * Sheet columns: ID | Title | Company | Description | Requirements | Type | Location | Salary | PostedBy | PostedDate | ApplyURL | Status
+ * Fetch all jobs from the Jobs sheet (Google Form linked)
+ * Form columns: Timestamp | Title | Company | Description | Requirements | Type | Location | Salary | ApplyURL | PostedBy | Status
  */
 export const fetchJobs = async () => {
   try {
@@ -237,21 +237,37 @@ export const fetchJobs = async () => {
 
     const [, ...dataRows] = rows;
 
-    return dataRows.map((row, index) => ({
-      id: row[0] || index + 1,
-      title: (row[1] || '').trim(),
-      company: (row[2] || '').trim(),
-      description: (row[3] || '').trim(),
-      requirements: (row[4] || '').split(',').map(r => r.trim()).filter(Boolean),
-      type: (row[5] || 'Full-time').trim(),
-      location: (row[6] || '').trim(),
-      salary: (row[7] || '').trim(),
-      postedBy: (row[8] || '').trim(),
-      postedDate: (row[9] || new Date().toISOString().split('T')[0]).trim(),
-      applyLink: (row[10] || '').trim() || '#',
-      status: (row[11] || 'Active').trim(),
-    }))
-    .filter(job => job.title && job.status === 'Active')
+    return dataRows.map((row, index) => {
+      // Parse timestamp to get date
+      const timestamp = (row[0] || '').trim();
+      let postedDate = new Date().toISOString().split('T')[0];
+      if (timestamp) {
+        try {
+          const parsedDate = new Date(timestamp);
+          if (!isNaN(parsedDate)) {
+            postedDate = parsedDate.toISOString().split('T')[0];
+          }
+        } catch {
+          // Keep default date
+        }
+      }
+
+      return {
+        id: index + 1,
+        title: (row[1] || '').trim(),
+        company: (row[2] || '').trim(),
+        description: (row[3] || '').trim(),
+        requirements: (row[4] || '').split(',').map(r => r.trim()).filter(Boolean),
+        type: (row[5] || 'Full-time').trim(),
+        location: (row[6] || '').trim(),
+        salary: (row[7] || '').trim(),
+        applyLink: (row[8] || '').trim() || '#',
+        postedBy: (row[9] || '').trim(),
+        status: (row[10] || 'approved').trim().toLowerCase(),
+        postedDate: postedDate,
+      };
+    })
+    .filter(job => job.title && job.status === 'approved')
     .sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
   } catch (error) {
     console.error('Error fetching jobs:', error);
@@ -264,8 +280,9 @@ export const fetchJobs = async () => {
 // ============================================================
 
 /**
- * Fetch all support requests from the SupportRequests sheet
- * Sheet columns: ID | Title | Description | Category | Amount | RequestedBy | RequestedByEmail | Date | Status
+ * Fetch all support requests from the SupportRequests sheet (Google Form linked)
+ * Form columns: Timestamp | Title | Description | Category | Amount | RequestedBy | RequestedByEmail
+ * Optional manual columns: Status (Column H)
  */
 export const fetchSupportRequests = async () => {
   try {
@@ -276,17 +293,33 @@ export const fetchSupportRequests = async () => {
 
     const [, ...dataRows] = rows;
 
-    return dataRows.map((row, index) => ({
-      id: row[0] || String(index + 1),
-      title: (row[1] || '').trim(),
-      description: (row[2] || '').trim(),
-      category: (row[3] || 'Other').trim(),
-      amount: (row[4] || '₦0').trim(),
-      requestedBy: (row[5] || 'Anonymous').trim(),
-      requestedByEmail: (row[6] || '').trim(),
-      date: (row[7] || new Date().toISOString().split('T')[0]).trim(),
-      status: (row[8] || 'pending').trim().toLowerCase(),
-    }))
+    return dataRows.map((row, index) => {
+      // Parse timestamp to get date
+      const timestamp = (row[0] || '').trim();
+      let date = new Date().toISOString().split('T')[0];
+      if (timestamp) {
+        try {
+          const parsedDate = new Date(timestamp);
+          if (!isNaN(parsedDate)) {
+            date = parsedDate.toISOString().split('T')[0];
+          }
+        } catch {
+          // Keep default date
+        }
+      }
+
+      return {
+        id: String(index + 1), // Auto-generate ID from row index
+        title: (row[1] || '').trim(),
+        description: (row[2] || '').trim(),
+        category: (row[3] || 'Other').trim(),
+        amount: (row[4] || '₦0').trim(),
+        requestedBy: (row[5] || 'Anonymous').trim(),
+        requestedByEmail: (row[6] || '').trim(),
+        date: date,
+        status: (row[7] || 'approved').trim().toLowerCase(), // Column H for status, default to approved
+      };
+    })
     .filter(req => req.title && req.status === 'approved');
   } catch (error) {
     console.error('Error fetching support requests:', error);
@@ -295,12 +328,12 @@ export const fetchSupportRequests = async () => {
 };
 
 // ============================================================
-// VOTES - Votes Sheet
+// VOTES - Votes Sheet (with Comments & Pledges)
 // ============================================================
 
 /**
  * Fetch all votes from the Votes sheet
- * Sheet columns: SupportRequestID | UserEmail | VoteTimestamp | VoteType
+ * Sheet columns: SupportRequestID | UserEmail | UserName | Comment | PledgeAmount | VoteTimestamp
  */
 export const fetchVotes = async () => {
   try {
@@ -313,10 +346,12 @@ export const fetchVotes = async () => {
 
     return dataRows.map((row, index) => ({
       id: index + 1,
-      supportRequestId: row[0] || '',
+      supportRequestId: (row[0] || '').toString().trim(),
       userEmail: (row[1] || '').toLowerCase().trim(),
-      voteTimestamp: row[2] || '',
-      voteType: row[3] || 'upvote',
+      userName: (row[2] || '').trim(),
+      comment: (row[3] || '').trim(),
+      pledgeAmount: parseFloat(row[4]) || 0,
+      voteTimestamp: (row[5] || '').trim(),
     }));
   } catch (error) {
     console.error('Error fetching votes:', error);
@@ -333,9 +368,8 @@ export const getVoteCounts = async () => {
     const voteCounts = {};
 
     votes.forEach(vote => {
-      if (vote.voteType === 'upvote') {
-        voteCounts[vote.supportRequestId] = (voteCounts[vote.supportRequestId] || 0) + 1;
-      }
+      const id = vote.supportRequestId;
+      voteCounts[id] = (voteCounts[id] || 0) + 1;
     });
 
     return voteCounts;
@@ -378,32 +412,138 @@ export const getUserVotedIds = async (userEmail) => {
 };
 
 /**
- * Submit a vote for a support request
- * Note: This requires the Votes sheet to be editable by anyone
- * For production, consider using Google Apps Script as a proxy
+ * Fetch all vote comments for a specific support request
  */
-export const submitVote = async (supportRequestId, userEmail) => {
+export const fetchVoteComments = async (supportRequestId) => {
   try {
-    // First check if user already voted
+    const votes = await fetchVotes();
+    return votes
+      .filter(vote => vote.supportRequestId === String(supportRequestId))
+      .map(vote => ({
+        userName: vote.userName,
+        comment: vote.comment,
+        pledgeAmount: vote.pledgeAmount,
+        timestamp: vote.voteTimestamp,
+      }))
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  } catch (error) {
+    console.error('Error fetching vote comments:', error);
+    return [];
+  }
+};
+
+/**
+ * Calculate total pledge amount for a specific support request
+ */
+export const calculateTotalPledge = async (supportRequestId) => {
+  try {
+    const votes = await fetchVotes();
+    return votes
+      .filter(vote => vote.supportRequestId === String(supportRequestId))
+      .reduce((total, vote) => total + (vote.pledgeAmount || 0), 0);
+  } catch (error) {
+    console.error('Error calculating total pledge:', error);
+    return 0;
+  }
+};
+
+/**
+ * Get all pledge totals for all support requests
+ */
+export const getAllPledgeTotals = async () => {
+  try {
+    const votes = await fetchVotes();
+    const pledgeTotals = {};
+
+    votes.forEach(vote => {
+      const id = vote.supportRequestId;
+      pledgeTotals[id] = (pledgeTotals[id] || 0) + (vote.pledgeAmount || 0);
+    });
+
+    return pledgeTotals;
+  } catch (error) {
+    console.error('Error getting pledge totals:', error);
+    return {};
+  }
+};
+
+/**
+ * Get all comments grouped by support request ID
+ */
+export const getAllVoteComments = async () => {
+  try {
+    const votes = await fetchVotes();
+    const commentsByRequest = {};
+
+    votes.forEach(vote => {
+      const id = vote.supportRequestId;
+      if (!commentsByRequest[id]) {
+        commentsByRequest[id] = [];
+      }
+      commentsByRequest[id].push({
+        userName: vote.userName,
+        comment: vote.comment,
+        pledgeAmount: vote.pledgeAmount,
+        timestamp: vote.voteTimestamp,
+      });
+    });
+
+    // Sort comments by timestamp (newest first) for each request
+    Object.keys(commentsByRequest).forEach(id => {
+      commentsByRequest[id].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    });
+
+    return commentsByRequest;
+  } catch (error) {
+    console.error('Error getting all vote comments:', error);
+    return {};
+  }
+};
+
+/**
+ * Submit a vote with comment and pledge for a support request
+ * One user can vote for MANY different requests, but only once per request
+ * Uses Google Apps Script web app for write operations
+ */
+export const submitVote = async (supportRequestId, userEmail, userName, comment, pledgeAmount = 0) => {
+  try {
+    // Check if user already voted for THIS specific request (read check still uses API key)
     const alreadyVoted = await checkIfUserVoted(supportRequestId, userEmail);
     if (alreadyVoted) {
-      return { success: false, message: 'You have already voted for this request' };
+      return { success: false, message: 'You have already supported this request' };
     }
 
-    const { SPREADSHEET_ID, RANGE } = SHEETS.VOTES;
-    const timestamp = new Date().toISOString();
+    // Use Google Apps Script web app for writing votes
+    // Replace this URL with your deployed Apps Script URL
+    const APPS_SCRIPT_URL = GOOGLE_SHEETS_CONFIG.APPS_SCRIPT?.VOTES_URL || '';
 
-    await appendSheetData(SPREADSHEET_ID, RANGE, [
-      String(supportRequestId),
-      userEmail.toLowerCase().trim(),
-      timestamp,
-      'upvote',
-    ]);
+    if (!APPS_SCRIPT_URL) {
+      console.error('Apps Script URL not configured');
+      return { success: false, message: 'Voting service not configured. Please contact admin.' };
+    }
 
-    return { success: true, message: 'Vote submitted successfully' };
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors', // Apps Script requires this
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        supportRequestId: String(supportRequestId),
+        userEmail: userEmail.toLowerCase().trim(),
+        userName: userName.trim(),
+        comment: (comment || '').trim(),
+        pledgeAmount: pledgeAmount || 0,
+      }),
+    });
+
+    // With no-cors mode, we can't read the response directly
+    // So we assume success if no error was thrown
+    // The duplicate check on the server side will prevent duplicates
+    return { success: true, message: 'Your support has been recorded!' };
   } catch (error) {
     console.error('Error submitting vote:', error);
-    return { success: false, message: 'Failed to submit vote. Please try again.' };
+    return { success: false, message: 'Failed to submit. Please try again.' };
   }
 };
 
@@ -412,22 +552,111 @@ export const submitVote = async (supportRequestId, userEmail) => {
 // ============================================================
 
 /**
- * Fetch support requests with vote counts
+ * Fetch support requests with vote counts, pledge totals, and comments
  */
 export const fetchSupportRequestsWithVotes = async () => {
   try {
-    const [requests, voteCounts] = await Promise.all([
+    const [requests, voteCounts, pledgeTotals, allComments] = await Promise.all([
       fetchSupportRequests(),
       getVoteCounts(),
+      getAllPledgeTotals(),
+      getAllVoteComments(),
     ]);
 
     return requests.map(request => ({
       ...request,
       votes: voteCounts[request.id] || 0,
+      totalPledged: pledgeTotals[request.id] || 0,
+      comments: allComments[request.id] || [],
     }));
   } catch (error) {
     console.error('Error fetching support requests with votes:', error);
     throw error;
+  }
+};
+
+// ============================================================
+// STATS FUNCTIONS (for Home Page)
+// ============================================================
+
+/**
+ * Get total member count from Members Sheet
+ */
+export const getMemberCount = async () => {
+  try {
+    const members = await fetchMembers();
+    return members.length;
+  } catch (error) {
+    console.error('Error getting member count:', error);
+    return 0;
+  }
+};
+
+/**
+ * Get total support requests count
+ */
+export const getSupportRequestCount = async () => {
+  try {
+    const requests = await fetchSupportRequests();
+    return requests.length;
+  } catch (error) {
+    console.error('Error getting support request count:', error);
+    return 0;
+  }
+};
+
+/**
+ * Get total jobs count
+ */
+export const getJobsCount = async () => {
+  try {
+    const jobs = await fetchJobs();
+    return jobs.length;
+  } catch (error) {
+    console.error('Error getting jobs count:', error);
+    return 0;
+  }
+};
+
+/**
+ * Get total pledges amount from all votes
+ */
+export const getTotalPledgesAmount = async () => {
+  try {
+    const votes = await fetchVotes();
+    return votes.reduce((total, vote) => total + (vote.pledgeAmount || 0), 0);
+  } catch (error) {
+    console.error('Error getting total pledges:', error);
+    return 0;
+  }
+};
+
+/**
+ * Get all stats for Home page in one call
+ */
+export const getHomeStats = async () => {
+  try {
+    const [memberCount, supportCount, jobsCount, totalPledges] = await Promise.all([
+      getMemberCount(),
+      getSupportRequestCount(),
+      getJobsCount(),
+      getTotalPledgesAmount(),
+    ]);
+
+    return {
+      memberCount,
+      supportCount,
+      jobsCount,
+      totalPledges,
+    };
+  } catch (error) {
+    console.error('Error getting home stats:', error);
+    return {
+      memberCount: 0,
+      supportCount: 0,
+      jobsCount: 0,
+      totalPledges: 0,
+    };
   }
 };
 
@@ -490,6 +719,19 @@ export default {
   checkIfUserVoted,
   getUserVotedIds,
   submitVote,
+
+  // Vote Comments & Pledges
+  fetchVoteComments,
+  calculateTotalPledge,
+  getAllPledgeTotals,
+  getAllVoteComments,
+
+  // Stats (for Home Page)
+  getMemberCount,
+  getSupportRequestCount,
+  getJobsCount,
+  getTotalPledgesAmount,
+  getHomeStats,
 
   // Utilities
   testSheetConnection,

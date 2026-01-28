@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { FaBriefcase, FaMapMarkerAlt, FaClock, FaMoneyBillWave, FaExternalLinkAlt, FaSearch, FaBuilding, FaSpinner } from 'react-icons/fa';
+import { FaBriefcase, FaMapMarkerAlt, FaClock, FaMoneyBillWave, FaExternalLinkAlt, FaSearch, FaBuilding } from 'react-icons/fa';
 import { fetchJobs } from '../services/googleSheetsService';
 import { isConfigured, GOOGLE_SHEETS_CONFIG } from '../config/googleSheets';
+import { JobCardSkeleton, Skeleton } from '../components/Skeleton';
 
 // Sample jobs data - Used when Google Sheets is not configured
 const sampleJobs = [
@@ -179,9 +180,26 @@ const Jobs = () => {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <FaSpinner className="w-12 h-12 text-teal-500 animate-spin mb-4" />
-            <p className="text-gray-600 font-medium">Loading jobs...</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Job Listings Skeleton */}
+            <div className="lg:col-span-2 space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <JobCardSkeleton key={i} />
+              ))}
+            </div>
+            {/* Details Panel Skeleton */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <Skeleton className="w-3/4 h-6 mb-2" />
+                <Skeleton className="w-1/2 h-4 mb-6" />
+                <div className="space-y-3 mb-6">
+                  <Skeleton className="w-full h-4" />
+                  <Skeleton className="w-full h-4" />
+                  <Skeleton className="w-full h-4" />
+                </div>
+                <Skeleton className="w-full h-10 rounded-lg" />
+              </div>
+            </div>
           </div>
         ) : (
           <>

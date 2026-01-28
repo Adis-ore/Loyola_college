@@ -1,8 +1,108 @@
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FaUsers, FaHandsHelping, FaNewspaper, FaBriefcase, FaArrowRight, FaHeart, FaStar, FaGraduationCap } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
+import { getHomeStats } from '../services/googleSheetsService';
+import { isConfigured } from '../config/googleSheets';
+import { Skeleton } from '../components/Skeleton';
+
+// Animated counter hook
+const useCountUp = (end, duration = 2000, shouldStart = true) => {
+  const [count, setCount] = useState(0);
+  const countRef = useRef(0);
+  const startTimeRef = useRef(null);
+
+  useEffect(() => {
+    if (!shouldStart || end === 0) {
+      setCount(end);
+      return;
+    }
+
+    const animate = (timestamp) => {
+      if (!startTimeRef.current) startTimeRef.current = timestamp;
+      const progress = Math.min((timestamp - startTimeRef.current) / duration, 1);
+
+      // Easing function for smooth animation
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      countRef.current = Math.floor(easeOutQuart * end);
+      setCount(countRef.current);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+
+    return () => {
+      startTimeRef.current = null;
+    };
+  }, [end, duration, shouldStart]);
+
+  return count;
+};
+
+// Format currency for display
+const formatCurrency = (amount) => {
+  if (amount >= 1000000) {
+    return '₦' + (amount / 1000000).toFixed(1) + 'M';
+  } else if (amount >= 1000) {
+    return '₦' + (amount / 1000).toFixed(0) + 'K';
+  }
+  return '₦' + amount.toLocaleString('en-NG');
+};
 
 const Home = () => {
+  const [stats, setStats] = useState({
+    memberCount: 0,
+    supportCount: 0,
+    jobsCount: 0,
+    totalPledges: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsLoaded, setStatsLoaded] = useState(false);
+
+  // Fetch live stats
+  useEffect(() => {
+    const loadStats = async () => {
+      setStatsLoading(true);
+      try {
+        if (isConfigured()) {
+          const liveStats = await getHomeStats();
+          setStats(liveStats);
+        } else {
+          // Sample stats for demo
+          setStats({
+            memberCount: 127,
+            supportCount: 8,
+            jobsCount: 15,
+            totalPledges: 2500000,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+        // Fallback to sample stats
+        setStats({
+          memberCount: 500,
+          supportCount: 50,
+          jobsCount: 100,
+          totalPledges: 10000000,
+        });
+      } finally {
+        setStatsLoading(false);
+        setStatsLoaded(true);
+      }
+    };
+
+    loadStats();
+  }, []);
+
+  // Animated counts
+  const memberCount = useCountUp(stats.memberCount, 2000, statsLoaded);
+  const supportCount = useCountUp(stats.supportCount, 2000, statsLoaded);
+  const jobsCount = useCountUp(stats.jobsCount, 2000, statsLoaded);
+  const pledgeCount = useCountUp(stats.totalPledges, 2000, statsLoaded);
+
   const features = [
     {
       icon: <FaUsers className="w-7 h-7" />,
@@ -38,11 +138,28 @@ const Home = () => {
     },
   ];
 
-  const stats = [
-    { value: '500+', label: 'Members', icon: <FaUsers className="w-5 h-5" /> },
-    { value: '50+', label: 'Support Given', icon: <FaHeart className="w-5 h-5" /> },
-    { value: '100+', label: 'Jobs Posted', icon: <FaBriefcase className="w-5 h-5" /> },
-    { value: '20+', label: 'Years Strong', icon: <FaStar className="w-5 h-5" /> },
+  const statsDisplay = [
+    {
+      value: statsLoading ? <Skeleton className="w-12 h-8 bg-white/20 mx-auto" /> : memberCount,
+      label: 'Members',
+      icon: <FaUsers className="w-5 h-5" />,
+    },
+    {
+      value: statsLoading ? <Skeleton className="w-12 h-8 bg-white/20 mx-auto" /> : supportCount,
+      label: 'Support Requests',
+      icon: <FaHeart className="w-5 h-5" />,
+    },
+    {
+      value: statsLoading ? <Skeleton className="w-12 h-8 bg-white/20 mx-auto" /> : jobsCount,
+      label: 'Jobs Posted',
+      icon: <FaBriefcase className="w-5 h-5" />,
+    },
+    {
+      value: '20+',
+      label: 'Years Strong',
+      icon: <FaStar className="w-5 h-5" />,
+      static: true,
+    },
   ];
 
   return (
@@ -107,15 +224,17 @@ const Home = () => {
 
             {/* Stats in Hero */}
             <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 animate-slide-up animation-delay-400">
-              {stats.map((stat, index) => (
+              {statsDisplay.map((stat, index) => (
                 <div key={index} className="relative group">
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all" />
                   <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 hover:bg-white/15 transition-all">
                     <div className="flex justify-center mb-3 text-emerald-300">
                       {stat.icon}
                     </div>
-                    <div className="text-3xl sm:text-4xl font-bold text-white mb-1">
-                      {stat.value}
+                    <div className="text-3xl sm:text-4xl font-bold text-white mb-1 flex justify-center">
+                      {stat.static ? stat.value : (
+                        typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value
+                      )}
                     </div>
                     <div className="text-emerald-200/70 text-sm font-medium">{stat.label}</div>
                   </div>
@@ -221,14 +340,26 @@ const Home = () => {
                     <p className="text-emerald-100 text-sm">Proud Loyolians</p>
                   </div>
                   <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                    <div className="text-4xl font-bold text-emerald-600 mb-2">500+</div>
+                    <div className="text-4xl font-bold text-emerald-600 mb-2">
+                      {statsLoading ? (
+                        <Skeleton className="w-20 h-10 mx-auto" />
+                      ) : (
+                        memberCount.toLocaleString()
+                      )}
+                    </div>
                     <p className="text-gray-600">Active Members</p>
                   </div>
                 </div>
                 <div className="space-y-4 pt-8">
                   <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                    <div className="text-4xl font-bold text-purple-600 mb-2">₦10M+</div>
-                    <p className="text-gray-600">Support Given</p>
+                    <div className="text-4xl font-bold text-purple-600 mb-2">
+                      {statsLoading ? (
+                        <Skeleton className="w-24 h-10 mx-auto" />
+                      ) : (
+                        formatCurrency(pledgeCount)
+                      )}
+                    </div>
+                    <p className="text-gray-600">Support Pledged</p>
                   </div>
                   <div className="bg-gradient-to-br from-teal-500 to-cyan-500 rounded-3xl p-8 text-white shadow-xl shadow-teal-500/20">
                     <FaHeart className="w-10 h-10 mb-4" />

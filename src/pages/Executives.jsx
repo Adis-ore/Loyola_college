@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { FaUser, FaEnvelope, FaPhone, FaLinkedin, FaTwitter, FaSpinner } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaPhone, FaLinkedin, FaTwitter } from 'react-icons/fa';
 import { fetchExecutives } from '../services/googleSheetsService';
 import { isConfigured } from '../config/googleSheets';
+import { ExecutiveCardSkeleton, Skeleton, SkeletonCircle } from '../components/Skeleton';
 
 // Sample executives data - Used when Google Sheets is not configured
 const sampleExecutives = [
@@ -138,10 +139,52 @@ const Executives = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-20 flex items-center justify-center">
-        <div className="text-center">
-          <FaSpinner className="w-12 h-12 text-indigo-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Loading executives...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-20">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-800 py-20 relative overflow-hidden">
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <Skeleton className="w-64 h-12 mx-auto mb-6 bg-white/20" />
+            <Skeleton className="w-96 h-6 mx-auto bg-white/20" />
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          {/* President Skeleton */}
+          <div className="mb-16">
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+              <div className="lg:flex">
+                <div className="lg:w-2/5 bg-gradient-to-br from-gray-200 to-gray-300 p-12 flex items-center justify-center">
+                  <SkeletonCircle size="xl" className="w-48 h-48" />
+                </div>
+                <div className="lg:w-3/5 p-12">
+                  <Skeleton className="w-32 h-8 rounded-full mb-6" />
+                  <Skeleton className="w-3/4 h-10 mb-6" />
+                  <Skeleton className="w-full h-4 mb-2" />
+                  <Skeleton className="w-full h-4 mb-2" />
+                  <Skeleton className="w-2/3 h-4 mb-8" />
+                  <div className="space-y-4 mb-8">
+                    <Skeleton className="w-48 h-5" />
+                    <Skeleton className="w-40 h-5" />
+                  </div>
+                  <div className="flex gap-4">
+                    <SkeletonCircle size="md" />
+                    <SkeletonCircle size="md" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Other Executives Skeleton */}
+          <div className="text-center mb-12">
+            <Skeleton className="w-48 h-10 mx-auto mb-4" />
+            <Skeleton className="w-80 h-5 mx-auto" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <ExecutiveCardSkeleton key={i} />
+            ))}
+          </div>
         </div>
       </div>
     );
