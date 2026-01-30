@@ -263,7 +263,8 @@ export const fetchJobs = async () => {
         salary: (row[7] || '').trim(),
         applyLink: (row[8] || '').trim() || '#',
         postedBy: (row[9] || '').trim(),
-        status: (row[10] || 'approved').trim().toLowerCase(),
+        postedByEmail: (row[10] || '').trim(),
+        status: (row[11] || 'pending').trim().toLowerCase(), // Column L for status, default to pending (admin must approve)
         postedDate: postedDate,
       };
     })
@@ -317,7 +318,7 @@ export const fetchSupportRequests = async () => {
         requestedBy: (row[5] || 'Anonymous').trim(),
         requestedByEmail: (row[6] || '').trim(),
         date: date,
-        status: (row[7] || 'approved').trim().toLowerCase(), // Column H for status, default to approved
+        status: (row[7] || 'pending').trim().toLowerCase(), // Column H for status, default to pending (admin must approve)
       };
     })
     .filter(req => req.title && req.status === 'approved');

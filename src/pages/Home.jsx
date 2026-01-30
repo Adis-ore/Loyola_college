@@ -165,21 +165,27 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-900">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img
+            src="/LoyolaBg.jpg"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/80 via-emerald-800/75 to-emerald-900/85" />
+        </div>
+
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Gradient Orbs */}
-          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-emerald-500/30 rounded-full blur-3xl animate-blob" />
-          <div className="absolute top-1/3 -right-20 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl animate-blob animation-delay-2000" />
-          <div className="absolute -bottom-20 left-1/3 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-blob animation-delay-4000" />
+          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-blob" />
+          <div className="absolute top-1/3 -right-20 w-96 h-96 bg-teal-500/15 rounded-full blur-3xl animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-20 left-1/3 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl animate-blob animation-delay-4000" />
 
           {/* Grid Pattern */}
-          <div className="absolute inset-0 pattern-grid opacity-20" />
-
-          {/* Floating Elements */}
-          <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-white/20 rounded-full animate-float" />
-          <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-emerald-400/30 rounded-full animate-float-delayed" />
-          <div className="absolute bottom-1/3 left-1/3 w-5 h-5 bg-teal-400/20 rounded-full animate-float" />
+          <div className="absolute inset-0 pattern-grid opacity-10" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">

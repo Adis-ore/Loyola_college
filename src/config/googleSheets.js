@@ -42,7 +42,7 @@ export const GOOGLE_SHEETS_CONFIG = {
     JOBS: {
       SPREADSHEET_ID: '1Wcnn11phKI_NfNG8OfwZEjywxLuTHF6QpLhseZoLEos',
       SHEET_NAME: 'Form Responses 1',
-      RANGE: 'Form Responses 1!A:K', // Columns: Timestamp, Title, Company, Description, Requirements, Type, Location, Salary, ApplyURL, PostedBy, Status
+      RANGE: 'Form Responses 1!A:L', // Columns: Timestamp, Title, Company, Description, Requirements, Type, Location, Salary, ApplyURL, PostedBy, Email, Status
     },
 
     // Sheet 6: Support Requests (linked to Google Form)
@@ -63,7 +63,7 @@ export const GOOGLE_SHEETS_CONFIG = {
   // Google Form URLs (optional - for submitting new entries)
   FORMS: {
     SUPPORT_REQUEST: 'https://forms.gle/z6xdhrFkfhytmJz59', // Google Form URL for requesting support
-    POST_JOB: '', // Google Form URL for posting jobs
+    POST_JOB: 'https://forms.gle/GpPr3zrQE6MDPR8u8', // Google Form URL for posting jobs
   },
 
   // Google Apps Script URLs (for write operations that require authentication)

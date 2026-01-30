@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { HiMenu, HiX } from 'react-icons/hi';
-import { FaGraduationCap } from 'react-icons/fa';
+import Logo from '../assets/Logo.JPG';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,14 +54,14 @@ const Navbar = () => {
             
             {/* Logo Section */}
             <Link to="/" className="flex items-center space-x-2 md:space-x-3 group flex-shrink-0">
-              <div className={`relative w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:rotate-3 ${
-                scrolled
-                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/30'
-                  : 'bg-white/20 backdrop-blur-md border border-white/30'
+              <div className={`relative w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl overflow-hidden transition-all duration-500 group-hover:scale-105 group-hover:rotate-3 shadow-lg ${
+                scrolled ? 'shadow-emerald-500/30' : 'shadow-black/20'
               }`}>
-                <FaGraduationCap className={`w-5 h-5 md:w-6 md:h-6 text-white transition-all ${
-                  scrolled ? 'drop-shadow-md' : 'drop-shadow-lg'
-                }`} />
+                <img
+                  src="/Logo.JPG"
+                  alt="Loyola O3 Logo"
+                  className="w-full h-full object-cover"
+                />
               </div>
               
               <div className="flex flex-col leading-none">
