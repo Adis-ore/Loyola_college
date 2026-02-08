@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { HiMenu, HiX } from 'react-icons/hi';
-import Logo from '../assets/Logo.JPG';
+import Logo from '../assets/Logo.jpg';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,7 +58,7 @@ const Navbar = () => {
                 scrolled ? 'shadow-emerald-500/30' : 'shadow-black/20'
               }`}>
                 <img
-                  src="/Logo.JPG"
+                  src={Logo}
                   alt="Loyola O3 Logo"
                   className="w-full h-full object-cover"
                 />

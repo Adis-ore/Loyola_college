@@ -115,24 +115,24 @@ const Footer = () => {
             <ul className="space-y-4">
               <li>
                 <a
-                  href="mailto:loyolao3set@gmail.com"
+                  href="mailto:loyola03set@gmail.com"
                   className="flex items-center text-gray-400 hover:text-emerald-400 transition-colors group"
                 >
                   <div className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center mr-3 group-hover:bg-emerald-600/20 transition-colors">
                     <FaEnvelope className="text-emerald-500" />
                   </div>
-                  <span className="text-sm">loyolao3set@gmail.com</span>
+                  <span className="text-sm">loyola03set@gmail.com</span>
                 </a>
               </li>
               <li>
                 <a
-                  href="tel:+234XXXXXXXXXX"
+                  href="tel:+2347033784765"
                   className="flex items-center text-gray-400 hover:text-emerald-400 transition-colors group"
                 >
                   <div className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center mr-3 group-hover:bg-emerald-600/20 transition-colors">
                     <FaPhone className="text-emerald-500" />
                   </div>
-                  <span className="text-sm">+234 XXX XXX XXXX</span>
+                  <span className="text-sm">+234 703 378 4765</span>
                 </a>
               </li>
             </ul>

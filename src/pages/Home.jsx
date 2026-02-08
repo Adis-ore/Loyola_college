@@ -5,6 +5,8 @@ import { HiSparkles } from 'react-icons/hi';
 import { getHomeStats } from '../services/googleSheetsService';
 import { isConfigured } from '../config/googleSheets';
 import { Skeleton } from '../components/Skeleton';
+import FinancialReports from '../components/FinancialReports';
+import Loyola from '../assets/LoyolaBg.jpg';
 
 // Animated counter hook
 const useCountUp = (end, duration = 2000, shouldStart = true) => {
@@ -169,7 +171,7 @@ const Home = () => {
         {/* Background Image */}
         <div className="absolute inset-0">
           <img
-            src="/LoyolaBg.jpg"
+            src={Loyola}
             alt=""
             className="w-full h-full object-cover"
           />
@@ -378,6 +380,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Financial Reports Section - Near Footer */}
+      <FinancialReports />
 
       {/* CTA Section */}
       <section className="py-24 relative overflow-hidden">

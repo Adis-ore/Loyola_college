@@ -125,13 +125,13 @@ export const fetchMembers = async () => {
 
     return dataRows.map((row, index) => ({
       id: index + 1,
-      name: row[0] || '',
-      email: row[1] || '',
-      phone: row[2] || '',
-      work: row[3] || '',
-      birthday: row[4] || '',
-      class: row[5] || 'Science',
-      city: row[6] || '',
+      name: (row[0] || '').trim(),
+      email: (row[1] || '').trim(),
+      phone: (row[2] || '').trim(),
+      work: (row[3] || '').trim(),
+      birthday: (row[4] || '').trim(),
+      class: (row[5] || 'Science').trim(),
+      city: (row[6] || '').trim(),
     })).filter(member => member.name && member.email); // Filter out empty rows
   } catch (error) {
     console.error('Error fetching members:', error);
@@ -549,6 +549,72 @@ export const submitVote = async (supportRequestId, userEmail, userName, comment,
 };
 
 // ============================================================
+// FINANCIAL REPORTS - Financial Reports Sheet
+// ============================================================
+
+/**
+ * Fetch all financial reports from the Financial Reports sheet
+ * Sheet columns: Year | Title | Description | PDF_URL | Status
+ */
+export const fetchFinancialReports = async () => {
+  try {
+    const { SPREADSHEET_ID, RANGE } = SHEETS.FINANCIAL_REPORTS;
+
+    if (!SPREADSHEET_ID) {
+      console.warn('Financial Reports sheet not configured');
+      return [];
+    }
+
+    const rows = await fetchSheetData(SPREADSHEET_ID, RANGE);
+
+    if (rows.length <= 1) return [];
+
+    const [, ...dataRows] = rows;
+
+    return dataRows.map((row, index) => ({
+      id: index + 1,
+      year: (row[0] || '').trim(),
+      title: (row[1] || '').trim(),
+      description: (row[2] || '').trim(),
+      pdfUrl: (row[3] || '').trim(),
+      status: (row[4] || 'Active').trim(),
+    }))
+    .filter(report => report.year && report.pdfUrl && report.status === 'Active')
+    .sort((a, b) => parseInt(b.year) - parseInt(a.year)); // Sort by year descending
+  } catch (error) {
+    console.error('Error fetching financial reports:', error);
+    return [];
+  }
+};
+
+/**
+ * Get available years from financial reports
+ */
+export const getFinancialReportYears = async () => {
+  try {
+    const reports = await fetchFinancialReports();
+    const years = [...new Set(reports.map(r => r.year))];
+    return years.sort((a, b) => parseInt(b) - parseInt(a));
+  } catch (error) {
+    console.error('Error getting report years:', error);
+    return [];
+  }
+};
+
+/**
+ * Get financial reports for a specific year
+ */
+export const getFinancialReportsByYear = async (year) => {
+  try {
+    const reports = await fetchFinancialReports();
+    return reports.filter(r => r.year === String(year));
+  } catch (error) {
+    console.error('Error getting reports by year:', error);
+    return [];
+  }
+};
+
+// ============================================================
 // COMBINED DATA FUNCTIONS
 // ============================================================
 
@@ -733,6 +799,11 @@ export default {
   getJobsCount,
   getTotalPledgesAmount,
   getHomeStats,
+
+  // Financial Reports
+  fetchFinancialReports,
+  getFinancialReportYears,
+  getFinancialReportsByYear,
 
   // Utilities
   testSheetConnection,

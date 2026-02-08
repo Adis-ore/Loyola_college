@@ -58,6 +58,13 @@ export const GOOGLE_SHEETS_CONFIG = {
       SHEET_NAME: 'Sheet1',
       RANGE: 'Sheet1!A:F', // Columns: SupportRequestID, UserEmail, UserName, Comment, PledgeAmount, VoteTimestamp
     },
+
+    // Sheet 8: Financial Reports (for downloadable PDF reports)
+    FINANCIAL_REPORTS: {
+      SPREADSHEET_ID: '1NAdTwiTnJU1CzWV5zPMjHO5rhxsFgsU5jLEHVynLjdM', // Fill with your Financial Reports sheet ID
+      SHEET_NAME: 'Sheet1',
+      RANGE: 'Sheet1!A:E', // Columns: Year | Title | Description | PDF_URL | Status
+    },
   },
 
   // Google Form URLs (optional - for submitting new entries)
